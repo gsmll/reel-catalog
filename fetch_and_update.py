@@ -50,6 +50,7 @@ def update_catalog():
             
             reels.append({
                 "url": msg.get("reel_url"),
+                "thumbnail": msg.get("reel_thumbnail"),
                 "user": user_name,
                 "timestamp": msg.get("timestamp")
             })

@@ -7,25 +7,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalDate = document.getElementById('modal-date');
     const closeBtn = document.querySelector('.close');
 
-    const allReels = reelsData;
+    // Track observed elements to clean up memory
+    let observedElements = new Set();
+    const thumbnailObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                const src = img.dataset.src;
+                if (src) {
+                    img.src = src;
+                    img.removeAttribute('data-src');
+                }
+                thumbnailObserver.unobserve(img);
+                observedElements.delete(img);
+            }
+        });
+    }, {
+        rootMargin: '200px', // Pre-load slightly ahead of scroll
+        threshold: 0.01
+    });
+
+    let currentRenderId = 0;
+
+    // Sort reels by timestamp descending (newest first)
+    const allReels = [...reelsData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     let currentReelIndex = -1;
     let currentReelsList = [];
     let favorites = new Set(JSON.parse(localStorage.getItem('favReels') || '[]'));
-    let lastRenderedReels = [];
-    let videoLoadQueue = [];
-    let isLoadingVideos = false;
-
-    try {
-        const grouped = groupReelsByMonth(allReels);
-        renderTOC(grouped);
-        const initialMonth = Object.keys(grouped)[0];
-        if (initialMonth) {
-            renderReels(grouped[initialMonth]);
-            document.querySelector('.month-item')?.classList.add('active');
-        }
-    } catch (err) {
-        console.error('Error loading reels:', err);
-    }
 
     function groupReelsByMonth(reels) {
         const months = {};
@@ -65,112 +73,101 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Throttled video loader - only 3 at a time to prevent crashes
-    function processVideoQueue() {
-        if (isLoadingVideos || videoLoadQueue.length === 0) return;
-        isLoadingVideos = true;
+    try {
+        const grouped = groupReelsByMonth(allReels);
+        renderTOC(grouped);
 
-        const batch = videoLoadQueue.splice(0, 3); // Load 3 at a time
-        let loaded = 0;
+        // Default to the most recent month
+        const sortedMonths = Object.keys(grouped);
+        const initialMonth = sortedMonths[0];
 
-        batch.forEach(video => {
-            video.preload = 'metadata';
-            const onLoad = () => {
-                video.currentTime = 0.1; // Get thumbnail frame
-                loaded++;
-                if (loaded >= batch.length) {
-                    isLoadingVideos = false;
-                    setTimeout(processVideoQueue, 50); // Small delay before next batch
-                }
-            };
-            video.addEventListener('loadeddata', onLoad, { once: true });
-            video.addEventListener('error', onLoad, { once: true }); // Continue on error
-            video.load();
-        });
+        if (initialMonth) {
+            renderReels(grouped[initialMonth]);
+            const firstMonthItem = document.querySelector('.month-item');
+            if (firstMonthItem) firstMonthItem.classList.add('active');
+        }
+    } catch (err) {
+        console.error('Error loading reels:', err);
     }
-
-    const videoObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const video = entry.target;
-                if (!video.dataset.queued) {
-                    video.dataset.queued = 'true';
-                    videoLoadQueue.push(video);
-                    processVideoQueue();
-                }
-                videoObserver.unobserve(video);
-            }
-        });
-    }, { rootMargin: '150px', threshold: 0.01 });
 
     async function renderReels(reels) {
         if (!reels || reels.length === 0) return;
 
-        // 1. STOP & CLEANUP: Pause/Unload all existing videos explicitly
-        // This is critical for mobile memory management before removing elements
-        const oldVideos = reelsGrid.querySelectorAll('video');
-        oldVideos.forEach(v => {
-            v.pause();
-            v.removeAttribute('src');
-            v.load();
-        });
+        const renderId = ++currentRenderId;
 
-        // Stop the loader from processing the *old* queue
-        videoLoadQueue = [];
-        isLoadingVideos = false;
-        videoObserver.disconnect();
+        // Cleanup: Unobserve all previous images
+        observedElements.forEach(el => thumbnailObserver.unobserve(el));
+        observedElements.clear();
 
-        // 2. CLEAR DOM: Allow UI thread to breathe
+        // Clear grid and scroll to top
         reelsGrid.innerHTML = '';
 
-        // Wait for a browser paint frame to let garbage collection kick in
-        await new Promise(requestAnimationFrame);
-
-        lastRenderedReels = reels;
-
-        // Sort favorites to top
+        // Pre-sort favorites once
         const sortedReels = [...reels].sort((a, b) => {
             return (favorites.has(b.url) ? 1 : 0) - (favorites.has(a.url) ? 1 : 0);
         });
 
         currentReelsList = sortedReels;
 
-        const fragment = document.createDocumentFragment();
+        // Chunked rendering to keep UI responsive
+        const CHUNK_SIZE = 20;
+        let index = 0;
 
-        sortedReels.forEach((reel, index) => {
-            const card = document.createElement('div');
-            const isFav = favorites.has(reel.url);
-            card.className = `reel-card glass ${isFav ? 'is-favorite' : ''}`;
-            card.dataset.url = reel.url;
+        const renderChunk = () => {
+            if (renderId !== currentRenderId) return; // Cancel if new month selected
 
-            const dateStr = new Date(reel.timestamp).toLocaleDateString();
+            const fragment = document.createDocumentFragment();
+            const end = Math.min(index + CHUNK_SIZE, sortedReels.length);
 
-            card.innerHTML = `
-                <div class="reel-placeholder"><span class="play-icon">▶</span></div>
-                <video src="${reel.url}" preload="none" muted playsinline></video>
-                <div class="fav-btn ${isFav ? 'active' : ''}" data-url="${reel.url}">❤️</div>
-                <div class="reel-info">
-                    <div class="reel-user">${reel.user}</div>
-                    <div class="reel-date">${dateStr}</div>
-                </div>
-            `;
+            for (let i = index; i < end; i++) {
+                const reel = sortedReels[i];
+                const card = document.createElement('div');
+                const isFav = favorites.has(reel.url);
+                card.className = `reel-card glass ${isFav ? 'is-favorite' : ''}`;
+                card.dataset.url = reel.url;
 
-            card.querySelector('.fav-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleFav(reel.url, card);
-            });
+                const dateStr = new Date(reel.timestamp).toLocaleDateString();
 
-            card.addEventListener('click', () => openModal(reel, index));
-            fragment.appendChild(card);
-        });
+                card.innerHTML = `
+                    <div class="reel-placeholder"><span class="play-icon">▶</span></div>
+                    ${reel.thumbnail ? `<img data-src="${reel.thumbnail}" class="lazy-thumb" alt="Reel thumbnail" decoding="async">` : ''}
+                    <div class="fav-btn ${isFav ? 'active' : ''}">❤️</div>
+                    <div class="reel-info">
+                        <div class="reel-user">${reel.user}</div>
+                        <div class="reel-date">${dateStr}</div>
+                    </div>
+                `;
 
-        reelsGrid.appendChild(fragment);
+                const thumbImg = card.querySelector('.lazy-thumb');
+                if (thumbImg) {
+                    thumbImg.style.opacity = '0';
+                    thumbImg.style.transition = 'opacity 0.3s ease';
+                    thumbImg.onload = () => { thumbImg.style.opacity = '1'; };
+                    thumbImg.onerror = () => { thumbImg.style.display = 'none'; };
+                    thumbnailObserver.observe(thumbImg);
+                    observedElements.add(thumbImg);
+                }
 
-        // 3. RESTART: Start observing new videos
-        // Small delay to ensure layout is settled
-        setTimeout(() => {
-            reelsGrid.querySelectorAll('video').forEach(v => videoObserver.observe(v));
-        }, 50);
+                card.querySelector('.fav-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFav(reel.url, card);
+                });
+
+                card.addEventListener('click', () => openModal(reel, i));
+                fragment.appendChild(card);
+            }
+
+            reelsGrid.appendChild(fragment);
+            index = end;
+
+            if (index < sortedReels.length) {
+                // Schedule next chunk using requestAnimationFrame to prioritize visual updates
+                requestAnimationFrame(renderChunk);
+            }
+        };
+
+        // Start initial render
+        renderChunk();
     }
 
     function toggleFav(url, card) {
@@ -181,21 +178,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         localStorage.setItem('favReels', JSON.stringify([...favorites]));
 
-        // Update just the card, not full re-render
+        // Visual update only
         if (card) {
             card.classList.toggle('is-favorite', favorites.has(url));
             card.querySelector('.fav-btn').classList.toggle('active', favorites.has(url));
         }
 
-        // Update modal button if open
+        // Setup modal button sync
         const modalFav = document.querySelector('.modal-fav-btn');
-        if (modalFav) {
+        if (modalFav && modalVideo.src === url) {
             modalFav.classList.toggle('active', favorites.has(url));
         }
     }
 
     function openModal(reel, index) {
         currentReelIndex = index;
+
+        // Modal is the ONLY place <video> exists
         modalVideo.src = reel.url;
         modalUser.textContent = `Posted by ${reel.user}`;
         modalDate.textContent = new Date(reel.timestamp).toLocaleString();
@@ -207,18 +206,32 @@ document.addEventListener('DOMContentLoaded', () => {
             modalFav.innerHTML = '❤️';
             modal.querySelector('.modal-content').appendChild(modalFav);
         }
-        modalFav.classList.toggle('active', favorites.has(reel.url));
-        modalFav.onclick = () => {
-            toggleFav(reel.url, reelsGrid.querySelector(`[data-url="${reel.url}"]`));
-        };
+
+        modalFav.className = `modal-fav-btn ${favorites.has(reel.url) ? 'active' : ''}`;
+
+        // Remove old listeners to prevent stacking
+        const newFavBtn = modalFav.cloneNode(true);
+        modalFav.parentNode.replaceChild(newFavBtn, modalFav);
+        newFavBtn.addEventListener('click', () => {
+            const card = reelsGrid.querySelector(`[data-url="${reel.url}"]`);
+            toggleFav(reel.url, card);
+            newFavBtn.classList.toggle('active', favorites.has(reel.url));
+        });
 
         modal.style.display = 'flex';
         document.body.classList.add('modal-open');
 
+        // Safe playback logic
         modalVideo.muted = true;
-        modalVideo.play().then(() => {
-            modalVideo.muted = false;
-        }).catch(() => { });
+        const playPromise = modalVideo.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                modalVideo.muted = false;
+            }).catch(error => {
+                console.log("Autoplay prevented:", error);
+                modalVideo.muted = true;
+            });
+        }
     }
 
     function navigateModal(direction) {
@@ -233,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
         modalVideo.pause();
-        modalVideo.removeAttribute('src');
+        modalVideo.removeAttribute('src'); // Fully unload video
         modalVideo.load();
     };
 

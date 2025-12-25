@@ -149,16 +149,17 @@ def process_single_message(msg):
         
         msg_data["reel_code"] = inner_clip.get("code")
         
-        # Get video URL from video_versions array
+        # Get video URL
         video_versions = inner_clip.get("video_versions", [])
         if video_versions:
             msg_data["reel_url"] = video_versions[0].get("url")
         
-        # Fallback to thumbnail if no video
-        if not msg_data.get("reel_url"):
-            candidates = inner_clip.get("image_versions2", {}).get("candidates", [])
-            if candidates:
-                msg_data["reel_thumbnail"] = candidates[0].get("url")
+        # Get Thumbnail
+        candidates = inner_clip.get("image_versions2", {}).get("candidates", [])
+        if candidates:
+            # Prefer the mid-sized candidate (usually index 1 or 0) for grid
+            thumb = candidates[1] if len(candidates) > 1 else candidates[0]
+            msg_data["reel_thumbnail"] = thumb.get("url")
 
     elif item_type == "media":
         media = msg.get("media", {})
@@ -173,6 +174,12 @@ def process_single_message(msg):
         if media:
             msg_data["reel_url"] = media.get("video_url")
             msg_data["reel_code"] = media.get("code")
+            
+            # Get Thumbnail
+            candidates = media.get("image_versions2", {}).get("candidates", [])
+            if candidates:
+                thumb = candidates[1] if len(candidates) > 1 else candidates[0]
+                msg_data["reel_thumbnail"] = thumb.get("url")
         
         if not msg_data.get("reel_url") and msg_data.get("reel_code"):
             msg_data["reel_url"] = f"https://www.instagram.com/reels/{msg_data['reel_code']}/"
@@ -180,9 +187,13 @@ def process_single_message(msg):
     elif item_type == "xma_media_share":
         xmas = msg.get("xma_share", [])
         if isinstance(xmas, list) and xmas:
-            msg_data["reel_url"] = xmas[0].get("target_url")
+            target = xmas[0]
+            msg_data["reel_url"] = target.get("target_url")
+            msg_data["reel_thumbnail"] = target.get("preview_url") or target.get("preview_url_large")
+            
         elif isinstance(xmas, dict):
             msg_data["reel_url"] = xmas.get("target_url")
+            msg_data["reel_thumbnail"] = xmas.get("preview_url") or xmas.get("preview_url_large")
     
     # Final direct-link creation from code
     if msg_data.get("reel_code") and not msg_data.get("reel_url"):
@@ -206,7 +217,7 @@ def download_thread_messages(cl, thread_id, thread_title):
         "visual_message_return_type": "unseen",
         "direction": "older",
         "seq_id": "40065",
-        "limit": "40", 
+        "limit": "100", 
     }
     
     # --- NEW: Fetch most recent messages first to catch anything since last run ---
