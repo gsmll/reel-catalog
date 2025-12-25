@@ -103,13 +103,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, { rootMargin: '150px', threshold: 0.01 });
 
-    function renderReels(reels) {
+    async function renderReels(reels) {
         if (!reels || reels.length === 0) return;
 
-        // Clear queue and stop loading
+        // 1. STOP & CLEANUP: Pause/Unload all existing videos explicitly
+        // This is critical for mobile memory management before removing elements
+        const oldVideos = reelsGrid.querySelectorAll('video');
+        oldVideos.forEach(v => {
+            v.pause();
+            v.removeAttribute('src');
+            v.load();
+        });
+
+        // Stop the loader from processing the *old* queue
         videoLoadQueue = [];
         isLoadingVideos = false;
         videoObserver.disconnect();
+
+        // 2. CLEAR DOM: Allow UI thread to breathe
+        reelsGrid.innerHTML = '';
+
+        // Wait for a browser paint frame to let garbage collection kick in
+        await new Promise(requestAnimationFrame);
 
         lastRenderedReels = reels;
 
@@ -119,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         currentReelsList = sortedReels;
-        reelsGrid.innerHTML = '';
 
         const fragment = document.createDocumentFragment();
 
@@ -152,8 +166,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         reelsGrid.appendChild(fragment);
 
-        // Start observing videos for lazy load
-        reelsGrid.querySelectorAll('video').forEach(v => videoObserver.observe(v));
+        // 3. RESTART: Start observing new videos
+        // Small delay to ensure layout is settled
+        setTimeout(() => {
+            reelsGrid.querySelectorAll('video').forEach(v => videoObserver.observe(v));
+        }, 50);
     }
 
     function toggleFav(url, card) {
