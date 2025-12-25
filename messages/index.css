@@ -138,8 +138,10 @@ main {
     overflow: hidden;
     cursor: pointer;
     transition: transform 0.2s ease;
-    contain: layout style paint;
-    /* Perf optimization */
+    contain: content;
+    /* Isolate layout/paint for performance */
+    will-change: transform;
+    /* Hint for hover animation */
 }
 
 @media (hover: hover) {
