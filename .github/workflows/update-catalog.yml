@@ -1,0 +1,40 @@
+name: Update Reel Catalog
+
+on:
+  schedule:
+    # Runs every day at 6 AM UTC (1 AM EST)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          pip install instagrapi pydantic requests PySocks pycryptodomex moviepy
+          
+      - name: Restore Instagram session
+        run: |
+          echo '${{ secrets.INSTAGRAM_SESSION }}' > session.json
+          
+      - name: Fetch new reels and update catalog
+        run: |
+          python fetch_and_update.py
+          
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "🔄 Auto-update reel catalog"
+          git push

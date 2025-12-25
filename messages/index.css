@@ -1,0 +1,326 @@
+:root {
+    --bg-color: #0c0c0c;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --accent-color: #ff3c7b;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --font-main: 'Outfit', sans-serif;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    overflow-x: hidden;
+    min-height: 100vh;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.glass-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 20% 30%, #2a1a2a 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, #1a2a3a 0%, transparent 40%);
+    z-index: -1;
+}
+
+.glass {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+}
+
+header {
+    padding: 4rem 2rem 2rem;
+    text-align: center;
+}
+
+header h1 {
+    font-size: 3.5rem;
+    font-weight: 600;
+    background: linear-gradient(135deg, #fff 0%, #ff3c7b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.toc {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    padding: 1.5rem;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+}
+
+.toc h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.month-item {
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+.month-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateX(5px);
+}
+
+.month-item.active {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.reels-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    content-visibility: auto;
+    /* Browser optimization for long lists */
+}
+
+.reel-card {
+    position: relative;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    will-change: transform;
+}
+
+.reel-card:hover {
+    transform: scale(1.03);
+}
+
+.reel-card img,
+.reel-card video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.reel-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 1.5rem 1rem;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    transition: opacity 0.3s ease;
+}
+
+.reel-user {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+}
+
+.reel-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.fav-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.4);
+    border: none;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+.fav-btn:hover {
+    background: rgba(255, 60, 123, 0.2);
+    transform: scale(1.1);
+}
+
+.fav-btn.active {
+    color: var(--accent-color);
+}
+
+.reel-card.is-favorite {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 15px rgba(255, 60, 123, 0.3);
+}
+
+.reel-card.is-favorite::after {
+    content: '★ Favorite';
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: var(--accent-color);
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    z-index: 11;
+}
+
+.modal-fav-btn {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    z-index: 2000;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.modal-fav-btn.active {
+    color: var(--accent-color);
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+.modal-content {
+    position: relative;
+    max-width: 500px;
+    width: 100%;
+    height: 90vh;
+    background: #000;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+}
+
+.modal video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: auto;
+    /* Force internal controls to be interactive */
+    position: relative;
+    z-index: 1;
+}
+
+.close {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    color: #fff;
+    font-size: 2.5rem;
+    cursor: pointer;
+    z-index: 2000;
+    text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+    line-height: 1;
+}
+
+.modal-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 2rem 1.5rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 5;
+}
+
+.info-group {
+    pointer-events: auto;
+    margin-bottom: 2rem;
+    /* Clears the native controls area */
+}
+
+.modal-info p {
+    margin: 0;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 1);
+    font-size: 0.9rem;
+}
+
+#modal-user {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.2rem;
+}
+
+#modal-date {
+    color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+    main {
+        grid-template-columns: 1fr;
+    }
+
+    .toc {
+        position: relative;
+        top: 0;
+        margin-bottom: 2rem;
+    }
+
+    #month-list {
+        display: flex;
+        overflow-x: auto;
+        gap: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .month-item {
+        white-space: nowrap;
+    }
+}

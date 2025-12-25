@@ -1,0 +1,19 @@
+# Virtual environment
+venv/
+
+# Session file (NEVER commit this - use GitHub Secrets instead)
+session.json
+
+# Debug files
+debug_*.json
+
+# macOS
+.DS_Store
+
+# Swap files
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.pyc

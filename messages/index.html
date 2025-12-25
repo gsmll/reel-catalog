@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reel Catalog Viewer</title>
+    <meta name="description" content="A premium catalog to view your Instagram reels history.">
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="glass-bg"></div>
+
+    <header>
+        <h1>Reel Catalog</h1>
+        <p class="subtitle">A visual history of shared reels</p>
+    </header>
+
+    <main>
+        <nav id="toc" class="toc glass">
+            <h2>Timeline</h2>
+            <div id="month-list">
+                <!-- Months will be populated here -->
+            </div>
+        </nav>
+
+        <section id="catalog" class="catalog-container">
+            <!-- Reels will be populated here -->
+            <div id="reels-grid" class="reels-grid"></div>
+        </section>
+    </main>
+
+    <div id="modal" class="modal glass">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <video id="modal-video" controls playsinline autoplay></video>
+            <div class="modal-info">
+                <div class="info-group">
+                    <p id="modal-user"></p>
+                    <p id="modal-date"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="reels_data.js"></script>
+    <script src="index.js"></script>
+</body>
+
+</html>
