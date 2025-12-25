@@ -312,25 +312,95 @@ main {
 }
 
 @media (max-width: 900px) {
+    header {
+        padding: 3rem 1rem 1rem;
+    }
+
+    header h1 {
+        font-size: 2.2rem;
+    }
+
     main {
         grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
     }
 
     .toc {
-        position: relative;
+        position: sticky;
         top: 0;
-        margin-bottom: 2rem;
+        z-index: 100;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .toc h2 {
+        display: none;
+        /* Hide "Timeline" on mobile to save space */
     }
 
     #month-list {
         display: flex;
         overflow-x: auto;
         gap: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding-bottom: 0.2rem;
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    #month-list::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari */
     }
 
     .month-item {
         white-space: nowrap;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .reels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .reel-info {
+        padding: 1rem 0.5rem;
+    }
+
+    .reel-user {
+        font-size: 0.85rem;
+    }
+
+    .reel-date {
+        font-size: 0.7rem;
+    }
+
+    .modal {
+        padding: 0;
+    }
+
+    .modal-content {
+        height: 100%;
+        max-width: none;
+        border-radius: 0;
+        border: none;
+    }
+
+    .info-group {
+        margin-bottom: 3.5rem;
+        /* More space for mobile controls */
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .reels-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* Force 2 columns on very small screens */
     }
 }
 </style>
@@ -377,6 +447,11 @@ main {
     
     <script>
 const reelsData = [
+  {
+    "url": "https://scontent-lga3-2.cdninstagram.com/o1/v/t2/f2/m86/AQNN4Sl_vQPDz2TEZ2-8rFkXzeGRbgiietH03ArKuFXZozh10WNX7CvcwJcplwBXVX2JkoOaHS-S40-uXsV8G7xo5C3O2gkcGOm4jcY.mp4?_nc_cat=105&_nc_sid=5e9851&_nc_ht=scontent-lga3-2.cdninstagram.com&_nc_ohc=AeTuWusI8uEQ7kNvwHQMW41&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5JTlNUQUdSQU0uQ0xJUFMuQzMuNzIwLmRhc2hfYmFzZWxpbmVfMV92MSIsInhwdl9hc3NldF9pZCI6ODYwODg4NTM2OTA2NjQ5LCJhc3NldF9hZ2VfZGF5cyI6MSwidmlfdXNlY2FzZV9pZCI6MTAwOTksImR1cmF0aW9uX3MiOjQzLCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&vs=72a67e05874246dd&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC8yODQyMzBDODVGNjg0NUFBNDM4M0VBOUY5MkFBRDhCMl92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HSUtJRVNRSFhuU0V4T2hhQUZIMUJaallFZFlOYnN0VEFRQUYVAgLIARIAKAAYABsCiAd1c2Vfb2lsATEScHJvZ3Jlc3NpdmVfcmVjaXBlATEVAAAmsu73tqe-hwMVAigCQzMsF0BFt2yLQ5WBGBJkYXNoX2Jhc2VsaW5lXzFfdjERAHX-B2XmnQEA&_nc_gid=l7VlIrBSQSYeseTwCfxs1w&_nc_zt=28&oh=00_AflWEGUsujWEN2iZ7CxLpIY0K7yGrRkG-SfZfxO5Frf1ug&oe=694F5136",
+    "user": "Ian",
+    "timestamp": "2025-12-25T12:52:23.450234"
+  },
   {
     "url": "https://scontent-lga3-3.cdninstagram.com/o1/v/t2/f2/m86/AQPH5AeSpCuDiUxxgpNUEjL1z_qbXYTOn-NKSDER3rL1CyE3EN4Bm8MuNsTmDpKV3RMfBBFbuju5MX-yTzimdFvn2mGCFebShs1GMBk.mp4?_nc_cat=108&_nc_sid=5e9851&_nc_ht=scontent-lga3-3.cdninstagram.com&_nc_ohc=ATiQU9ho_gQQ7kNvwEKHrw7&efg=eyJ2ZW5jb2RlX3RhZyI6Inhwdl9wcm9ncmVzc2l2ZS5JTlNUQUdSQU0uQ0xJUFMuQzMuNzIwLmRhc2hfYmFzZWxpbmVfMV92MSIsInhwdl9hc3NldF9pZCI6MTIwNDM2MjY1NzY5NTkxMiwiYXNzZXRfYWdlX2RheXMiOjAsInZpX3VzZWNhc2VfaWQiOjEwMDk5LCJkdXJhdGlvbl9zIjo1LCJ1cmxnZW5fc291cmNlIjoid3d3In0%3D&ccb=17-1&vs=ec6a325a8024ab81&_nc_vs=HBksFQIYUmlnX3hwdl9yZWVsc19wZXJtYW5lbnRfc3JfcHJvZC8xNzQ1RjIwN0YxQTcwQ0RBRDJCNjVGOTEzRjg4NDQ4MV92aWRlb19kYXNoaW5pdC5tcDQVAALIARIAFQIYOnBhc3N0aHJvdWdoX2V2ZXJzdG9yZS9HRkw4LVNOeDlIbWtoUWdGQUVBZ1RqT2ZTXzhZYnN0VEFRQUYVAgLIARIAKAAYABsCiAd1c2Vfb2lsATEScHJvZ3Jlc3NpdmVfcmVjaXBlATEVAAAm0KKkhpHXowQVAigCQzMsF0AWiDEm6XjVGBJkYXNoX2Jhc2VsaW5lXzFfdjERAHX-B2XmnQEA&_nc_gid=2z8YgEgV2iHD4iUIw0B8nw&_nc_zt=28&oh=00_AfknPtSItRMdVlSA-lbOZifuIohOKqgrRKNrXUZ9fLQtDw&oe=694F69CD",
     "user": "Ian",
@@ -11914,7 +11989,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentReelIndex = -1;
     let currentReelsList = [];
-    let favorites = new Set(JSON.parse(sessionStorage.getItem('favReels') || '[]'));
+    let favorites = new Set(JSON.parse(localStorage.getItem('favReels') || '[]'));
     let lastRenderedReels = [];
 
     const observerOptions = {
@@ -11983,7 +12058,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             favorites.add(url);
         }
-        sessionStorage.setItem('favReels', JSON.stringify([...favorites]));
+        localStorage.setItem('favReels', JSON.stringify([...favorites]));
 
         // Re-render to update sorting and highlights
         renderReels(lastRenderedReels);

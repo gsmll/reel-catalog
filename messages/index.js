@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentReelIndex = -1;
     let currentReelsList = [];
-    let favorites = new Set(JSON.parse(sessionStorage.getItem('favReels') || '[]'));
+    let favorites = new Set(JSON.parse(localStorage.getItem('favReels') || '[]'));
     let lastRenderedReels = [];
 
     const observerOptions = {
@@ -128,7 +128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             favorites.add(url);
         }
-        sessionStorage.setItem('favReels', JSON.stringify([...favorites]));
+        localStorage.setItem('favReels', JSON.stringify([...favorites]));
 
         // Re-render to update sorting and highlights
         renderReels(lastRenderedReels);

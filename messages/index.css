@@ -303,24 +303,94 @@ main {
 }
 
 @media (max-width: 900px) {
+    header {
+        padding: 3rem 1rem 1rem;
+    }
+
+    header h1 {
+        font-size: 2.2rem;
+    }
+
     main {
         grid-template-columns: 1fr;
+        padding: 1rem;
+        gap: 1rem;
     }
 
     .toc {
-        position: relative;
+        position: sticky;
         top: 0;
-        margin-bottom: 2rem;
+        z-index: 100;
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+
+    .toc h2 {
+        display: none;
+        /* Hide "Timeline" on mobile to save space */
     }
 
     #month-list {
         display: flex;
         overflow-x: auto;
         gap: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding-bottom: 0.2rem;
+        scrollbar-width: none;
+        /* Firefox */
+    }
+
+    #month-list::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari */
     }
 
     .month-item {
         white-space: nowrap;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .reels-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.8rem;
+    }
+
+    .reel-info {
+        padding: 1rem 0.5rem;
+    }
+
+    .reel-user {
+        font-size: 0.85rem;
+    }
+
+    .reel-date {
+        font-size: 0.7rem;
+    }
+
+    .modal {
+        padding: 0;
+    }
+
+    .modal-content {
+        height: 100%;
+        max-width: none;
+        border-radius: 0;
+        border: none;
+    }
+
+    .info-group {
+        margin-bottom: 3.5rem;
+        /* More space for mobile controls */
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.8rem;
+    }
+
+    .reels-grid {
+        grid-template-columns: repeat(2, 1fr);
+        /* Force 2 columns on very small screens */
     }
 }
